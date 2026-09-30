@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from typing import Any
 
 try:
@@ -34,6 +34,22 @@ except ImportError:  # pragma: no cover - chỉ dùng khi chưa cài requirement
 
 def get_langfuse_client():
     return get_client()
+
+
+@contextmanager
+def start_observation(client: Any, **kwargs: Any):
+    starter = getattr(client, "start_as_current_observation", None)
+    if starter is None:
+        yield None
+        return
+    with starter(**kwargs) as observation:
+        yield observation
+
+
+def update_generation(client: Any, **kwargs: Any) -> None:
+    updater = getattr(client, "update_current_generation", None)
+    if updater is not None:
+        updater(**kwargs)
 
 
 def tracing_enabled() -> bool:
